@@ -39,13 +39,13 @@ Promise.all([
     "json",
     "https://anime-planet.com/anime/all?page=",
     "li.card",
-    10
+    1
   ),
   scrapping_data(
     "recomendations_anime",
     "json",
     "https://www.anime-planet.com/users/recent_recommendations.php?filter=anime&page=",
     "td.tableTitle",
-    10
+    1
   ),
 ]);

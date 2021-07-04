@@ -77,16 +77,6 @@ const get_details = async (file_name, file_type, arr, url, obj) => {
         )}`,
       ];
 
-      // characters_image = $("a.CharacterCard")
-      //   .children("aside.CharacterCard__aside")
-      //   .attr("style");
-
-      const text =
-        "background-image: url(/images/characters/thumbs/akito-sohma-2120.jpg?t=1591445786)";
-      const regex = text.match(/^url/g);
-
-      console.log(regex);
-
       arr.push(obj);
 
       await write_document(file_name, file_type, arr);
