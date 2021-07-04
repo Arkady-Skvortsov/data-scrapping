@@ -3,20 +3,28 @@ const path = require("path");
 const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
 
-const get_details = async (url, obj) => {
+const get_details = async (file_name, file_type, arr, url, obj) => {
   try {
-    for (let i in url) {
-      const browser = await puppeteer.launch({ headless: true, slowMo: 500 });
+    const browser = await puppeteer.launch({ headless: true, slowMo: 500 });
+
+    for (let urls of url) {
       const page = await browser.newPage();
-      await page.goto(`https://www.anime-planet.com${url[i]}`);
+      await page.goto(`https://www.anime-planet.com${urls}`);
+
       const content = await page.content();
-      browser.close();
 
       const $ = cheerio.load(content);
 
       obj.name = $("div#siteContainer").children("h1").text();
-      obj.img = $("div.mainEntry").children("img.screenshots").attr("src");
-      obj.type = $("section.entryBar").find("span.type").text();
+      obj.img =
+        "https://www.anime-planet.com" +
+        $("div.mainEntry").children("img.screenshots").attr("src");
+      obj.type = regx(
+        $("section.entryBar").find("span.type").text(),
+        /\n+/g,
+        " "
+      );
+      obj.rank = $("section.EntryBar").children("div.pure-1").last().text();
       obj.year = $("section.entryBar").find("span.iconYear").text();
       obj.current_data = $("section.entryBar")
         .children("div")
@@ -29,30 +37,79 @@ const get_details = async (url, obj) => {
         .children("a")
         .first()
         .text();
-      obj.rating = $("section.entryBar").find("div.avgRating").text();
+      obj.rating = regx(
+        $("section.entryBar").find("div.avgRating").text(),
+        /\n+/g,
+        ""
+      );
       obj.about = $("div.md-3-5").find("p").text();
-      obj.tags = [$("div.md-3-5").find("li").children("a").text()].join(", ");
+      obj.tags = [
+        regx($("div.md-3-5").find("li").children("a").text(), /\n+/g, ", "),
+      ];
       obj.warning_content = [
-        $("div.tags--plain").find("li").children("a").text(),
+        regx($("div.tags--plain").find("li").children("a").text(), /\n+/g, ""),
       ];
 
-      console.log(url[i]);
+      obj.some_characters = [
+        `those names -> ${$("a.CharacterCard")
+          .find("strong.CharacterCard__title")
+          .text()}, those japanese voices -> ${regx(
+          $("a.CharacterCard")
+            .find("div.CharacterCard__body")
+            .children("div")
+            .text(),
+          /\n+/g,
+          " "
+        )}`,
+      ];
 
-      return obj;
+      obj.some_staff = [
+        `those names -> ${$("a.CharacterCard")
+          .children("article.CharacterCard__main")
+          .find(".CharacterCard__title")
+          .text()}, those roles -> ${regx(
+          $("a.CharacterCard")
+            .children("article.CharacterCard__main")
+            .find(".CharacterCard__body")
+            .text(),
+          /\n+/g,
+          " "
+        )}`,
+      ];
+
+      // characters_image = $("a.CharacterCard")
+      //   .children("aside.CharacterCard__aside")
+      //   .attr("style");
+
+      const text =
+        "background-image: url(/images/characters/thumbs/akito-sohma-2120.jpg?t=1591445786)";
+      const regex = text.match(/^url/g);
+
+      console.log(regex);
+
+      arr.push(obj);
+
+      await write_document(file_name, file_type, arr);
     }
-  } catch (error) {
-    throw error;
+
+    browser.close();
+  } catch (e) {
+    throw e;
   }
 };
 
-const write_document = (name, content) => {
-  // fs.mkdir(path.resolve(__dirname, "../anime_list"), function (err) {
-  //   if (err) console.log(err);
+const write_document = (file_name, file_type, content) => {
+  fs.writeFileSync(
+    `${file_name}.${file_type}`,
+    JSON.stringify(content),
+    function (err) {
+      if (err) console.log(err);
+    }
+  );
+};
 
-  fs.writeFileSync(`${name}.json`, JSON.stringify(content), function (err) {
-    if (err) console.log(err);
-  });
-  //});
+const regx = (text, reg, repl_text) => {
+  return text.replace(reg, repl_text);
 };
 
 module.exports = {
