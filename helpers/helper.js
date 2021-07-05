@@ -1,5 +1,4 @@
 const fs = require("fs");
-const path = require("path");
 const puppeteer = require("puppeteer");
 const cheerio = require("cheerio");
 
@@ -89,8 +88,8 @@ const get_details = async (file_name, file_type, arr, url, obj) => {
 };
 
 const write_document = (file_name, file_type, content) => {
-  fs.writeFileSync(
-    `${file_name}.${file_type}`,
+  fs.writeFile(
+    `./anime/${file_name}.${file_type}`,
     JSON.stringify(content),
     function (err) {
       if (err) console.log(err);
